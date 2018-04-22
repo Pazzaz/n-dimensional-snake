@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>N-Dimensional Snake</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<style>
+    html {
+        height: 100%;
+    }
+
+    body {
+        padding: 10px;
+        margin: 0;
+        display: flex;
+        height: 100%;
+    }
+
+    .player1 {
+        display: flex;
+        align-content: flex-start;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 40%;
+    }
+
+    .player2 {
+        display: flex;
+        align-content: flex-start;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 40%;
+    }
+
+    .stats {
+        width: 20%;
+    }
+
+    svg {
+        border: black 1px solid;
+        margin: 2px;
+    }
+</style>
+
+<body>
+    <div class="player1"></div>
+    <div class="stats">
+    </div>
+    <div class="player2"></div>
+</body>
+<script src="main.js"></script>
+
+</html>
