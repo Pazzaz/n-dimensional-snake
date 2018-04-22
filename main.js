@@ -36,34 +36,12 @@ const keybindings = [
         { "up": "w", "down": "s" },
         { "up": "e", "down": "d" },
         { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
-        { "up": "r", "down": "f" },
 
     ],
     [
         { "up": "i", "down": "k" },
         { "up": "o", "down": "l" },
         { "up": "p", "down": "ö" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
-        { "up": "å", "down": "ä" },
         { "up": "å", "down": "ä" },
     ]
 ]
@@ -73,7 +51,7 @@ let players = {
     "player2": { "id": 2, "input": false },
 }
 let width = 3;
-let dimensions = 2;
+let dimensions = 4;
 function deepSlice(items, start, end) {
     if (typeof items[0] !== 'object') {
         return Object.assign({}, items)
@@ -156,11 +134,12 @@ for (const name of Object.keys(players)) {
         let container = d3.select("." + name)
             .append("svg")
             .attr("id", name + element[0] + "" + element[1])
-            .attr("viewBox", "0 0 45 45")
+            .attr("viewBox", "0 0 46 46")
             .style("width", "200px")
             .style("height", "200px");
         container
             .append("text")
+            .attr("fill", "#FFF1E8")
             .attr("x", 23)
             .attr("y", 5)
             .attr("text-anchor", "middle")
@@ -168,6 +147,7 @@ for (const name of Object.keys(players)) {
             .text("" + keybindings[player.id - 1][element[0]].up);
         container
             .append("text")
+            .attr("fill", "#FFF1E8")
             .attr("x", 23)
             .attr("y", 43)
             .attr("text-anchor", "middle")
@@ -176,6 +156,7 @@ for (const name of Object.keys(players)) {
 
         container
             .append("text")
+            .attr("fill", "#FFF1E8")
             .attr("x", 5)
             .attr("y", 23)
             .attr("text-anchor", "middle")
@@ -183,6 +164,7 @@ for (const name of Object.keys(players)) {
             .text("" + keybindings[player.id - 1][element[1]].up);
         container
             .append("text")
+            .attr("fill", "#FFF1E8")
             .attr("x", 41)
             .attr("y", 23)
             .attr("text-anchor", "middle")
@@ -194,8 +176,8 @@ for (const name of Object.keys(players)) {
             .enter()
             .append("rect")
             .attr("x", function (d) { return d.x })
-            .attr("width", function (d) { return 10 })
-            .attr("height", function (d) { return 10 })
+            .attr("width", function (d) { return 10.2 })
+            .attr("height", function (d) { return 10.2 })
             .attr("y", function (d) { return d.y })
             .attr("true_coords", function (d) { return d.coords; });
     }
@@ -210,14 +192,14 @@ var player_1_score = stats.append("text")
     .attr("y", 12)
     .attr("text-anchor", "middle")
     .attr("font-size", 4)
-    .attr("fill", "rgb(255, 197, 122)")
+    .attr("fill", "#FF004D")
     .text(0)
 var player_2_score = stats.append("text")
     .attr("x", 37)
     .attr("y", 12)
     .attr("text-anchor", "middle")
     .attr("font-size", 4)
-    .attr("fill", "rgb(255, 66, 210)")
+    .attr("fill", "#FFA300")
     .text(0)
 
 function draw() {
@@ -235,21 +217,21 @@ function draw() {
                 .attr("true_coords", function (d) { return d.coords; })
                 .style("fill", (d) => {
                     if (d.info.goal) {
-                        return "rgb(0, 191, 12)"
+                        return "#008751"
                     } else if (d.info.player) {
                         if (d.info.player == "head1") {
-                            return "rgb(255, 197, 122)"
+                            return "#FF004D"
                         } else if (d.info.player == "1") {
-                            return "rgb(255, 158, 33)"
+                            return "#7E2553"
                         } else if (d.info.player == "head2") {
-                            return "rgb(255, 66, 210)"
+                            return "#FFA300"
                         } else if (d.info.player == "2") {
-                            return "rgb(209, 25, 166)"
+                            return "#AB5236"
                         } else {
                             console.error("INVALID PLAYER");
                         }
                     } else {
-                        return "rgb(219, 232, 255)"
+                        return "#FFF1E8"
                     };
                 });
 
