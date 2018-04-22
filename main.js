@@ -32,17 +32,26 @@ function k_combinations(set, k) {
 
 const keybindings = [
     [
-        { "up": "q", "down": "a" },
-        { "up": "w", "down": "s" },
-        { "up": "e", "down": "d" },
-        { "up": "r", "down": "f" },
+        { "up": "1", "down": "q" },
+        { "up": "2", "down": "w" },
+        { "up": "3", "down": "e" },
+        { "up": "4", "down": "r" },
+        { "up": "5", "down": "t" },
+        { "up": "6", "down": "y" },
+        { "up": "7", "down": "u" },
+        { "up": "8", "down": "i" },
+        { "up": "9", "down": "o" },
+        { "up": "0", "down": "p" },
 
     ],
     [
-        { "up": "i", "down": "k" },
-        { "up": "o", "down": "l" },
-        { "up": "p", "down": "ö" },
-        { "up": "å", "down": "ä" },
+        { "up": "k", "down": "m" },
+        { "up": "j", "down": "n" },
+        { "up": "h", "down": "b" },
+        { "up": "g", "down": "v" },
+        { "up": "f", "down": "c" },
+        { "up": "d", "down": "x" },
+        { "up": "s", "down": "z" },
     ]
 ]
 
@@ -115,12 +124,6 @@ function make_slice(array, axis_1, axis_2, axis_values) {
     return out
 }
 
-for (const name of Object.keys(players)) {
-    const player = players[name]
-    player.snake = [random_coord()]
-    deep_get(blocks, player.snake[0])[0]["player"] = "head" + player.id
-}
-
 let possible_dimensions = []
 for (let i = 0; i < dimensions; i++) {
     possible_dimensions.push(i);
@@ -130,7 +133,7 @@ for (const name of Object.keys(players)) {
     const player = players[name]
     let player_boards = []
     for (let element of boards) {
-        let slice = make_slice(blocks, element[0], element[1], player.snake[player.snake.length - 1])
+        let slice = make_slice(blocks, element[0], element[1], random_coord())
         let container = d3.select("." + name)
             .append("svg")
             .attr("id", name + element[0] + "" + element[1])
@@ -144,6 +147,7 @@ for (const name of Object.keys(players)) {
             .attr("y", 5)
             .attr("text-anchor", "middle")
             .attr("font-size", 4)
+            .style("font-family", "Sans-Serif")
             .text("" + keybindings[player.id - 1][element[0]].up);
         container
             .append("text")
@@ -203,10 +207,18 @@ var player_2_score = stats.append("text")
     .text(0)
 
 function draw() {
+    blocks = generate_blocks()
+    for (const name of Object.keys(players)) {
+        const player = players[name]
+        for (const element of player.snake) {
+            deep_get(blocks, element)[0]["player"] = "" + player.id
+        }
+        deep_get(blocks, player.snake[player.snake.length - 1])[0]["player"] = "head" + player.id
+    }
+    deep_get(blocks, goal)[0]["goal"] = true
     for (const name of Object.keys(players)) {
         const player = players[name]
         for (const element of boards) {
-
             let slice = make_slice(blocks, element[0], element[1], player.snake[player.snake.length - 1])
             d3.select("#" + name + element[0] + "" + element[1])
                 .selectAll("rect")
@@ -260,11 +272,9 @@ var goal;
 function reset() {
     blocks = generate_blocks()
     goal = random_coord()
-    deep_get(blocks, goal)[0]["goal"] = true
     for (const name of Object.keys(players)) {
         const player = players[name]
         player.snake = [random_coord()]
-        deep_get(blocks, player.snake[0])[0]["player"] = "head" + player.id
         player["direction"] = [0, 0, 0]
     }
     draw()
@@ -274,13 +284,9 @@ reset()
 function add_to_snake(player) {
     let new_head = elementwise_add(player.snake[player.snake.length - 1], player.direction)
     player.snake.push(new_head)
-    if (player.snake.length > 1) {
-        deep_get(blocks, player.snake[player.snake.length - 2])[0]["player"] = "" + player.id
-    }
     if (new_head.includes(-1) || new_head.includes(width)) {
         return "failed";
     }
-    deep_get(blocks, new_head)[0]["player"] = "head" + player.id
 }
 
 function collision() {
@@ -313,10 +319,8 @@ function shorten_snakes() {
         const player = players[name]
         if (equal(player.snake[player.snake.length - 1], goal)) {
             goal_taken = true
-            deep_get(blocks, goal)[0]["goal"] = false
         } else {
             let removed = player.snake.shift();
-            deep_get(blocks, removed)[0]["player"] = false
         }
     }
     return goal_taken
@@ -338,7 +342,6 @@ function step() {
         while (includes_equal(players["player1"].snake, goal) || includes_equal(players["player2"].snake, goal)) {
             goal = random_coord()
         }
-        deep_get(blocks, goal)[0]["goal"] = true
     }
     let result = collision()
     if (result) {
