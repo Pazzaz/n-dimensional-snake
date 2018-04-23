@@ -56,8 +56,8 @@ const keybindings = [
 ]
 
 let players = {
-    "player1": { "id": 1, "input": false, "main_colour": "#FF004D", "secondary_colour": "#7E2553" },
-    "player2": { "id": 2, "input": false, "main_colour": "#FFA300", "secondary_colour": "#AB5236" },
+    "player1": { "id": 1, "input": false, "main_colour": "#FF004D", "secondary_colour": "#7E2553", "snake": [] },
+    "player2": { "id": 2, "input": false, "main_colour": "#FFA300", "secondary_colour": "#AB5236", "snake": [] },
 }
 let width = 3;
 let dimensions = 4;
@@ -76,8 +76,23 @@ function generate_blocks() {
     }
     return blocks
 }
+function random_coord() {
+    let output = []
+    for (let i = 0; i < dimensions; i++) {
+        output.push(Math.floor((Math.random() * width)))
+    }
+    return output
+}
 
 var blocks = generate_blocks()
+
+function get_empty_coord() {
+    coord = random_coord()
+    while ((blocks.get(coord)[0].goal || blocks.get(coord)[0].player)) {
+        coord = random_coord()
+    }
+    return coord
+}
 
 function equal(arr1, arr2) {
     for (let i = 0; i < arr1.length; i++) {
@@ -120,7 +135,7 @@ for (const name of Object.keys(players)) {
     const player = players[name]
     let player_boards = []
     for (let element of boards) {
-        let slice = make_slice(blocks, element[0], element[1], random_coord())
+        let slice = make_slice(blocks, element[0], element[1], get_empty_coord())
         let container = d3.select("." + name)
             .append("svg")
             .attr("id", name + element[0] + "" + element[1])
@@ -179,17 +194,17 @@ for (const name of Object.keys(players)) {
 }
 
 
-var stats = d3.select(".stats").append("svg")
+const stats = d3.select(".stats").append("svg")
     .attr("viewBox", "0 0 40 40")
 
-var player_1_score = stats.append("text")
+const player_1_score = stats.append("text")
     .attr("x", 3)
     .attr("y", 12)
     .attr("text-anchor", "middle")
     .attr("font-size", 4)
     .attr("fill", "#FF004D")
     .text(0)
-var player_2_score = stats.append("text")
+const player_2_score = stats.append("text")
     .attr("x", 37)
     .attr("y", 12)
     .attr("text-anchor", "middle")
@@ -197,16 +212,22 @@ var player_2_score = stats.append("text")
     .attr("fill", "#FFA300")
     .text(0)
 
-function draw() {
+function update_board() {
     blocks = generate_blocks()
     for (const name of Object.keys(players)) {
         const player = players[name]
         for (const element of player.snake) {
             blocks.get(element)[0]["player"] = [name, false]
         }
-        blocks.get(player.snake[player.snake.length - 1])[0]["player"] = [name, true]
+        if (player.snake.length > 0) {
+            blocks.get(player.snake[player.snake.length - 1])[0]["player"] = [name, true]
+        }
     }
     blocks.get(goal)[0]["goal"] = true
+}
+
+function draw() {
+    update_board()
     for (const name of Object.keys(players)) {
         const player = players[name]
         for (const element of boards) {
@@ -236,13 +257,7 @@ function draw() {
     }
 }
 
-function random_coord() {
-    let output = []
-    for (let i = 0; i < dimensions; i++) {
-        output.push(Math.floor((Math.random() * width)))
-    }
-    return output
-}
+
 
 function elementwise_add(array1, array2) {
     let out = []
@@ -256,10 +271,11 @@ function elementwise_add(array1, array2) {
 var goal;
 function reset() {
     blocks = generate_blocks()
-    goal = random_coord()
+    goal = get_empty_coord()
     for (const name of Object.keys(players)) {
         const player = players[name]
-        player.snake = [random_coord()]
+        player.snake = [get_empty_coord()]
+        update_board()
         player["direction"] = [0, 0, 0]
     }
     draw()
@@ -323,11 +339,7 @@ function step() {
         return;
     }
     goal_taken = shorten_snakes()
-    if (goal_taken) {
-        while (includes_equal(players["player1"].snake, goal) || includes_equal(players["player2"].snake, goal)) {
-            goal = random_coord()
-        }
-    }
+    goal = get_empty_coord()
     let result = collision()
     if (result) {
         if (result == "player1") {
