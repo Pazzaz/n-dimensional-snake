@@ -1,3 +1,36 @@
+var boards;
+var blocks;
+const width = 3;
+let dimensions = 4;
+let players = {
+    "player1": {
+        "input": false, "main_colour": "#FF004D", "secondary_colour": "#7E2553", "snake": [], "keybindings": [
+            { "up": "1", "down": "q" },
+            { "up": "2", "down": "w" },
+            { "up": "3", "down": "e" },
+            { "up": "4", "down": "r" },
+            { "up": "5", "down": "t" },
+            { "up": "6", "down": "y" },
+            { "up": "7", "down": "u" },
+            { "up": "8", "down": "i" },
+            { "up": "9", "down": "o" },
+            { "up": "0", "down": "p" },
+        ],
+    },
+    "player2": {
+        "input": false, "main_colour": "#FFA300", "secondary_colour": "#AB5236", "snake": [], "keybindings": [
+            { "up": "k", "down": "m" },
+            { "up": "j", "down": "n" },
+            { "up": "h", "down": "b" },
+            { "up": "g", "down": "v" },
+            { "up": "f", "down": "c" },
+            { "up": "d", "down": "x" },
+            { "up": "s", "down": "z" },
+        ]
+    },
+}
+
+
 function k_combinations(set, k) {
     let i, j, combs, head, tailcombs;
     if (k > set.length || k <= 0) {
@@ -28,40 +61,6 @@ function k_combinations(set, k) {
     return combs;
 }
 
-
-
-const keybindings = [
-    [
-        { "up": "1", "down": "q" },
-        { "up": "2", "down": "w" },
-        { "up": "3", "down": "e" },
-        { "up": "4", "down": "r" },
-        { "up": "5", "down": "t" },
-        { "up": "6", "down": "y" },
-        { "up": "7", "down": "u" },
-        { "up": "8", "down": "i" },
-        { "up": "9", "down": "o" },
-        { "up": "0", "down": "p" },
-
-    ],
-    [
-        { "up": "k", "down": "m" },
-        { "up": "j", "down": "n" },
-        { "up": "h", "down": "b" },
-        { "up": "g", "down": "v" },
-        { "up": "f", "down": "c" },
-        { "up": "d", "down": "x" },
-        { "up": "s", "down": "z" },
-    ]
-]
-
-let players = {
-    "player1": { "id": 1, "input": false, "main_colour": "#FF004D", "secondary_colour": "#7E2553", "snake": [] },
-    "player2": { "id": 2, "input": false, "main_colour": "#FFA300", "secondary_colour": "#AB5236", "snake": [] },
-}
-let width = 3;
-let dimensions = 4;
-
 function generate_blocks() {
     let blocks = []
     for (let i = 0; i < width ** dimensions; i++) {
@@ -71,6 +70,10 @@ function generate_blocks() {
         let total_index = 0;
         for (let i = 0; i < indices.length; i++) {
             total_index += (3 ** i) * indices[i]
+        }
+        // HACK
+        if (total_index >= this.length) {
+            return [{ "goal": false, "player": false }]
         }
         return this[total_index]
     }
@@ -84,7 +87,7 @@ function random_coord() {
     return output
 }
 
-var blocks = generate_blocks()
+
 
 function get_empty_coord() {
     coord = random_coord()
@@ -125,73 +128,80 @@ function make_slice(array, axis_1, axis_2, axis_values) {
     }
     return out
 }
+function remake() {
+    blocks = generate_blocks()
+    let possible_dimensions = []
+    for (let i = 0; i < dimensions; i++) {
+        possible_dimensions.push(i);
+    }
+    boards = k_combinations(possible_dimensions, 2)
+    for (const name of Object.keys(players)) {
+        d3.select("." + name).selectAll("svg").remove()
+        const player = players[name]
+        let player_boards = []
+        for (let element of boards) {
+            let slice = make_slice(blocks, element[0], element[1], get_empty_coord())
+            let container = d3.select("." + name)
+                .append("svg")
+                .attr("id", name + element[0] + "" + element[1])
+                .attr("viewBox", "0 0 46 46")
+                .style("width", "200px")
+                .style("height", "200px");
+            container
+                .append("text")
+                .attr("fill", "#FFF1E8")
+                .attr("x", 23)
+                .attr("y", 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", 4)
+                .style("font-family", "Sans-Serif")
+                .attr("id", "up-" + element[0])
+                .text("" + player.keybindings[element[0]].up);
+            container
+                .append("text")
+                .attr("fill", "#FFF1E8")
+                .attr("x", 23)
+                .attr("y", 43)
+                .attr("text-anchor", "middle")
+                .attr("font-size", 4)
+                .attr("id", "down-" + element[0])
+                .text("" + player.keybindings[element[0]].down);
 
-let possible_dimensions = []
-for (let i = 0; i < dimensions; i++) {
-    possible_dimensions.push(i);
-}
-var boards = k_combinations(possible_dimensions, 2)
-for (const name of Object.keys(players)) {
-    const player = players[name]
-    let player_boards = []
-    for (let element of boards) {
-        let slice = make_slice(blocks, element[0], element[1], get_empty_coord())
-        let container = d3.select("." + name)
-            .append("svg")
-            .attr("id", name + element[0] + "" + element[1])
-            .attr("viewBox", "0 0 46 46")
-            .style("width", "200px")
-            .style("height", "200px");
-        container
-            .append("text")
-            .attr("fill", "#FFF1E8")
-            .attr("x", 23)
-            .attr("y", 5)
-            .attr("text-anchor", "middle")
-            .attr("font-size", 4)
-            .style("font-family", "Sans-Serif")
-            .attr("id", "up-" + element[0])
-            .text("" + keybindings[player.id - 1][element[0]].up);
-        container
-            .append("text")
-            .attr("fill", "#FFF1E8")
-            .attr("x", 23)
-            .attr("y", 43)
-            .attr("text-anchor", "middle")
-            .attr("font-size", 4)
-            .attr("id", "down-" + element[0])
-            .text("" + keybindings[player.id - 1][element[0]].down);
-
-        container
-            .append("text")
-            .attr("fill", "#FFF1E8")
-            .attr("x", 5)
-            .attr("y", 23)
-            .attr("text-anchor", "middle")
-            .attr("font-size", 4)
-            .attr("id", "up-" + element[1])
-            .text("" + keybindings[player.id - 1][element[1]].up);
-        container
-            .append("text")
-            .attr("fill", "#FFF1E8")
-            .attr("x", 41)
-            .attr("y", 23)
-            .attr("text-anchor", "middle")
-            .attr("font-size", 4)
-            .attr("id", "down-" + element[1])
-            .text("" + keybindings[player.id - 1][element[1]].down);
-        let dom = container
-            .selectAll("rect")
-            .data(slice)
-            .enter()
-            .append("rect")
-            .attr("x", function (d) { return d.x })
-            .attr("width", function (d) { return 10.2 })
-            .attr("height", function (d) { return 10.2 })
-            .attr("y", function (d) { return d.y })
-            .attr("true_coords", function (d) { return d.coords; });
+            container
+                .append("text")
+                .attr("fill", "#FFF1E8")
+                .attr("x", 5)
+                .attr("y", 23)
+                .attr("text-anchor", "middle")
+                .attr("font-size", 4)
+                .attr("id", "up-" + element[1])
+                .text("" + player.keybindings[element[1]].up);
+            container
+                .append("text")
+                .attr("fill", "#FFF1E8")
+                .attr("x", 41)
+                .attr("y", 23)
+                .attr("text-anchor", "middle")
+                .attr("font-size", 4)
+                .attr("id", "down-" + element[1])
+                .text("" + player.keybindings[element[1]].down);
+            let dom = container
+                .selectAll("rect")
+                .data(slice)
+                .enter()
+                .append("rect")
+                .attr("x", function (d) { return d.x })
+                .attr("width", function (d) { return 10.2 })
+                .attr("height", function (d) { return 10.2 })
+                .attr("y", function (d) { return d.y })
+                .attr("true_coords", function (d) { return d.coords; });
+        }
     }
 }
+
+
+
+remake()
 
 
 const stats = d3.select(".stats").append("svg")
@@ -282,6 +292,17 @@ function reset() {
 }
 reset()
 
+d3.select('#dimensions')
+    .on("change", function () {
+        let value = document.getElementById("dimensions").selectedIndex + 2;
+        dimensions = value
+        // HACK
+        remake()
+        reset()
+        remake()
+        reset()
+    });
+
 function add_to_snake(player) {
     let new_head = elementwise_add(player.snake[player.snake.length - 1], player.direction)
     player.snake.push(new_head)
@@ -363,12 +384,12 @@ document.addEventListener("keydown", (event) => {
         let clicked = false;
         let id;
         for (let a = 0; a < dimensions; a++) {
-            if (event.key == keybindings[player.id - 1][a].up) {
+            if (event.key == player.keybindings[a].up) {
                 id = "#up-" + a
                 clicked = true
                 direction[a] = -1;
                 break;
-            } else if (event.key == keybindings[player.id - 1][a].down) {
+            } else if (event.key == player.keybindings[a].down) {
                 id = "#down-" + a
                 clicked = true
                 direction[a] = 1;
