@@ -56,8 +56,8 @@ const keybindings = [
 ]
 
 let players = {
-    "player1": { "id": 1, "input": false },
-    "player2": { "id": 2, "input": false },
+    "player1": { "id": 1, "input": false, "main_colour": "#FF004D", "secondary_colour": "#7E2553" },
+    "player2": { "id": 2, "input": false, "main_colour": "#FFA300", "secondary_colour": "#AB5236" },
 }
 let width = 3;
 let dimensions = 4;
@@ -148,6 +148,7 @@ for (const name of Object.keys(players)) {
             .attr("text-anchor", "middle")
             .attr("font-size", 4)
             .style("font-family", "Sans-Serif")
+            .attr("id", "up-" + element[0])
             .text("" + keybindings[player.id - 1][element[0]].up);
         container
             .append("text")
@@ -156,6 +157,7 @@ for (const name of Object.keys(players)) {
             .attr("y", 43)
             .attr("text-anchor", "middle")
             .attr("font-size", 4)
+            .attr("id", "down-" + element[0])
             .text("" + keybindings[player.id - 1][element[0]].down);
 
         container
@@ -165,6 +167,7 @@ for (const name of Object.keys(players)) {
             .attr("y", 23)
             .attr("text-anchor", "middle")
             .attr("font-size", 4)
+            .attr("id", "up-" + element[1])
             .text("" + keybindings[player.id - 1][element[1]].up);
         container
             .append("text")
@@ -173,6 +176,7 @@ for (const name of Object.keys(players)) {
             .attr("y", 23)
             .attr("text-anchor", "middle")
             .attr("font-size", 4)
+            .attr("id", "down-" + element[1])
             .text("" + keybindings[player.id - 1][element[1]].down);
         let dom = container
             .selectAll("rect")
@@ -211,9 +215,9 @@ function draw() {
     for (const name of Object.keys(players)) {
         const player = players[name]
         for (const element of player.snake) {
-            deep_get(blocks, element)[0]["player"] = "" + player.id
+            deep_get(blocks, element)[0]["player"] = [name, false]
         }
-        deep_get(blocks, player.snake[player.snake.length - 1])[0]["player"] = "head" + player.id
+        deep_get(blocks, player.snake[player.snake.length - 1])[0]["player"] = [name, true]
     }
     deep_get(blocks, goal)[0]["goal"] = true
     for (const name of Object.keys(players)) {
@@ -231,16 +235,10 @@ function draw() {
                     if (d.info.goal) {
                         return "#008751"
                     } else if (d.info.player) {
-                        if (d.info.player == "head1") {
-                            return "#FF004D"
-                        } else if (d.info.player == "1") {
-                            return "#7E2553"
-                        } else if (d.info.player == "head2") {
-                            return "#FFA300"
-                        } else if (d.info.player == "2") {
-                            return "#AB5236"
+                        if (d.info.player[1]) {
+                            return players[d.info.player[0]].main_colour
                         } else {
-                            console.error("INVALID PLAYER");
+                            return players[d.info.player[0]].secondary_colour
                         }
                     } else {
                         return "#FFF1E8"
@@ -360,30 +358,27 @@ document.addEventListener("keydown", (event) => {
     for (const name of Object.keys(players)) {
 
         const player = players[name]
-        if (!player.input) {
-            let direction = new Array(dimensions).fill(0)
-            let checking = new Array(dimensions).fill(0)
-            let clicked = false;
-            for (let a = 0; a < dimensions; a++) {
-                if (event.key == keybindings[player.id - 1][a].up) {
-                    clicked = true
-                    direction[a] = -1;
-                    checking[a] = 1
-                    break;
-                } else if (event.key == keybindings[player.id - 1][a].down) {
-                    clicked = true
-                    direction[a] = 1;
-                    checking[a] = -1;
-                    break;
-                }
+        let direction = new Array(dimensions).fill(0)
+        let clicked = false;
+        let id;
+        for (let a = 0; a < dimensions; a++) {
+            if (event.key == keybindings[player.id - 1][a].up) {
+                id = "#up-" + a
+                clicked = true
+                direction[a] = -1;
+                break;
+            } else if (event.key == keybindings[player.id - 1][a].down) {
+                id = "#down-" + a
+                clicked = true
+                direction[a] = 1;
+                break;
             }
-            if (clicked && !equal(checking, player.direction)) {
-                player.input = true
-                player.direction = direction
-            } else {
-                player.input = false
-            }
-
+        }
+        if (clicked) {
+            d3.select("." + name).selectAll("text").attr("fill", "#FFF1E8")
+            d3.select("." + name).selectAll(id).attr("fill", player.main_colour)
+            player.input = true
+            player.direction = direction
         }
     }
     let valid = true;
@@ -395,6 +390,7 @@ document.addEventListener("keydown", (event) => {
     }
     if (valid) {
         for (const name of Object.keys(players)) {
+            d3.select("." + name).selectAll("text").attr("fill", "#FFF1E8")
             players[name].input = false
         }
         step()
