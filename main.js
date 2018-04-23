@@ -61,36 +61,23 @@ let players = {
 }
 let width = 3;
 let dimensions = 4;
-function deepSlice(items, start, end) {
-    if (typeof items[0] !== 'object') {
-        return Object.assign({}, items)
-    }
-    return items.map(function (item) {
-        return deepSlice(item, start, end)
-    })
-}
 
 function generate_blocks() {
-    let blocks = [{ "goal": false, "player": false }]
-    for (let i = 0; i < dimensions; i++) {
-        let deeper = deepSlice(blocks, 0, blocks.length - 1)
-        let container = new Array(width)
-        for (let a = 0; a < width; a++) {
-            container[a] = deepSlice(deeper, 0, deeper.length - 1)
+    let blocks = []
+    for (let i = 0; i < width ** dimensions; i++) {
+        blocks.push([{ "goal": false, "player": false }])
+    }
+    blocks.get = function (indices) {
+        let total_index = 0;
+        for (let i = 0; i < indices.length; i++) {
+            total_index += (3 ** i) * indices[i]
         }
-        blocks = deepSlice(container, 0, container.length - 1)
+        return this[total_index]
     }
     return blocks
 }
-var blocks = generate_blocks()
 
-function deep_get(array, indices) {
-    let depth = array;
-    for (let i = 0; i < indices.length; i++) {
-        depth = depth[indices[i]]
-    }
-    return depth
-}
+var blocks = generate_blocks()
 
 function equal(arr1, arr2) {
     for (let i = 0; i < arr1.length; i++) {
@@ -117,7 +104,7 @@ function make_slice(array, axis_1, axis_2, axis_values) {
         coords[axis_1] = a
         for (let b = 0; b < width; b++) {
             coords[axis_2] = b
-            let display_part = { "coords": coords.slice(), "x": b * 10 + 8, "y": a * 10 + 8, "info": deep_get(array, coords)[0] }
+            let display_part = { "coords": coords.slice(), "x": b * 10 + 8, "y": a * 10 + 8, "info": array.get(coords)[0] }
             out.push(display_part)
         }
     }
@@ -215,11 +202,11 @@ function draw() {
     for (const name of Object.keys(players)) {
         const player = players[name]
         for (const element of player.snake) {
-            deep_get(blocks, element)[0]["player"] = [name, false]
+            blocks.get(element)[0]["player"] = [name, false]
         }
-        deep_get(blocks, player.snake[player.snake.length - 1])[0]["player"] = [name, true]
+        blocks.get(player.snake[player.snake.length - 1])[0]["player"] = [name, true]
     }
-    deep_get(blocks, goal)[0]["goal"] = true
+    blocks.get(goal)[0]["goal"] = true
     for (const name of Object.keys(players)) {
         const player = players[name]
         for (const element of boards) {
