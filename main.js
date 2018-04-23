@@ -339,7 +339,9 @@ function step() {
         return;
     }
     goal_taken = shorten_snakes()
-    goal = get_empty_coord()
+    if (goal_taken) {
+        goal = get_empty_coord()
+    }
     let result = collision()
     if (result) {
         if (result == "player1") {
