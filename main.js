@@ -1,7 +1,8 @@
-var boards;
-var blocks;
-const width = 3;
-let dimensions = 4;
+var origin = [190, 200], scale = 20, j = 10, cubesData = [], alpha = 0, beta = 0, startAngle = Math.PI / 6;
+var svg = d3.select('#three').call(d3.drag().on('drag', dragged).on('start', dragStart).on('end', dragEnd)).append('g');
+var cubesGroup = svg.append('g').attr('class', 'cubes');
+var mx, my, mouseX, mouseY;
+
 let players = {
     "player1": {
         "input": false, "main_colour": "#FF004D", "secondary_colour": "#7E2553", "snake": [], "keybindings": [
@@ -29,6 +30,148 @@ let players = {
         ]
     },
 }
+
+function equal(arr1, arr2) {
+    for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] != arr2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function includes_equal(list, element) {
+    for (const element_in_list of list) {
+        if (equal(element_in_list, element)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+var cubes3D = d3._3d()
+    .shape('CUBE')
+    .x(function (d) { return d.x; })
+    .y(function (d) { return d.y; })
+    .z(function (d) { return d.z; })
+    .rotateY(startAngle)
+    .rotateX(-startAngle)
+    .origin(origin)
+    .scale(20);
+
+function processData(data, tt) {
+
+    /* --------- CUBES ---------*/
+
+    var cubes = cubesGroup.selectAll('g.cube').data(data, function (d) { return d.id });
+
+    var ce = cubes
+        .enter()
+        .append('g')
+        .attr('class', 'cube')
+        .attr('fill', function (d) { return d.color; })
+        .attr('stroke', function (d) { return "black"; })
+        .merge(cubes)
+        .sort(cubes3D.sort);
+    ce
+        .transition()
+        .attr('fill', function (d) { return d.color; })
+    cubes.exit().remove();
+
+    /* --------- FACES ---------*/
+
+    var faces = cubes.merge(ce).selectAll('path.face').data(function (d) { return d.faces; }, function (d) { return d.face; });
+
+    faces.enter()
+        .append('path')
+        .attr('class', 'face')
+        .attr('fill-opacity', 0.95)
+        .classed('_3d', true)
+        .merge(faces)
+        .transition().duration(tt)
+        .attr('d', cubes3D.draw);
+
+    faces.exit().remove();
+
+    /* --------- SORT TEXT & FACES ---------*/
+
+    ce.selectAll('._3d').sort(d3._3d().sort);
+
+}
+const width = 3;
+
+
+function generate_cubedata_from_blocks(dat) {
+    let cubesData = []
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < width; y++) {
+            for (let z = 0; z < width; z++) {
+                let index = x + width * y + (width ** 2) * z
+                let cube = makeCube(x - 1, y - 1, z - 1, index)
+                let info = dat.get([x, y, z])[0]
+
+                if (info.goal) {
+                    cube.color = "#008751"
+                } else if (info.player) {
+
+                    if (info.player[1]) {
+                        cube.color = players[info.player[0]].main_colour
+                    } else {
+                        cube.color = players[info.player[0]].secondary_colour
+                    }
+                } else {
+                    cube.color = "#FFF1E8"
+                }
+
+                cubesData.push(cube)
+            }
+        }
+    }
+    return cubesData
+}
+
+function init(blocks) {
+    cubesData = generate_cubedata_from_blocks(blocks)
+    processData(cubes3D(cubesData), 1000);
+}
+
+function dragStart() {
+    mx = d3.event.x;
+    my = d3.event.y;
+}
+
+function dragged() {
+    mouseX = mouseX || 0;
+    mouseY = mouseY || 0;
+    beta = (d3.event.x - mx + mouseX) * Math.PI / 230;
+    alpha = (d3.event.y - my + mouseY) * Math.PI / 230 * (-1);
+    processData(cubes3D.rotateY(beta + startAngle).rotateX(alpha - startAngle)(cubesData), 0);
+}
+
+function dragEnd() {
+    mouseX = d3.event.x - mx + mouseX;
+    mouseY = d3.event.y - my + mouseY;
+}
+
+function makeCube(x, y, z, id) {
+    let a = [
+        { x: 5 * x - 1, y: 5 * y + 1, z: 5 * z + 1 }, // FRONT TOP LEFT
+        { x: 5 * x - 1, y: 5 * y - 1, z: 5 * z + 1 }, // FRONT BOTTOM LEFT
+        { x: 5 * x + 1, y: 5 * y - 1, z: 5 * z + 1 }, // FRONT BOTTOM RIGHT
+        { x: 5 * x + 1, y: 5 * y + 1, z: 5 * z + 1 }, // FRONT TOP RIGHT
+        { x: 5 * x - 1, y: 5 * y + 1, z: 5 * z - 1 }, // BACK  TOP LEFT
+        { x: 5 * x - 1, y: 5 * y - 1, z: 5 * z - 1 }, // BACK  BOTTOM LEFT
+        { x: 5 * x + 1, y: 5 * y - 1, z: 5 * z - 1 }, // BACK  BOTTOM RIGHT
+        { x: 5 * x + 1, y: 5 * y + 1, z: 5 * z - 1 }, // BACK  TOP RIGHT
+    ];
+    a.id = id
+    return a
+}
+
+var boards;
+var blocks;
+
+let dimensions = 3;
 
 
 function k_combinations(set, k) {
@@ -79,6 +222,7 @@ function generate_blocks() {
     }
     return blocks
 }
+
 function random_coord() {
     let output = []
     for (let i = 0; i < dimensions; i++) {
@@ -88,7 +232,7 @@ function random_coord() {
 }
 
 
-
+// TODO: It sometimes chooses occupied positions
 function get_empty_coord() {
     coord = random_coord()
     while ((blocks.get(coord)[0].goal || blocks.get(coord)[0].player)) {
@@ -97,22 +241,17 @@ function get_empty_coord() {
     return coord
 }
 
-function equal(arr1, arr2) {
-    for (let i = 0; i < arr1.length; i++) {
-        if (arr1[i] != arr2[i]) {
-            return false;
+function get_chosen_coords(axis_1, axis_2, axis_values) {
+    coords = axis_values.slice()
+    let out = []
+    for (let a = 0; a < width; a++) {
+        coords[axis_1] = a
+        for (let b = 0; b < width; b++) {
+            coords[axis_2] = b
+            out.push(coords.slice())
         }
     }
-    return true;
-}
-
-function includes_equal(list, element) {
-    for (const element_in_list of list) {
-        if (equal(element_in_list, element)) {
-            return true;
-        }
-    }
-    return false;
+    return out
 }
 
 function make_slice(array, axis_1, axis_2, axis_values) {
@@ -202,7 +341,7 @@ function remake() {
 
 
 remake()
-
+init(blocks)
 
 const stats = d3.select(".stats").append("svg")
     .attr("viewBox", "0 0 40 40")
@@ -237,7 +376,9 @@ function update_board() {
 }
 
 function draw() {
+
     update_board()
+    init(blocks)
     for (const name of Object.keys(players)) {
         const player = players[name]
         for (const element of boards) {
@@ -347,7 +488,6 @@ function shorten_snakes() {
     }
     return goal_taken
 }
-
 function step() {
     if (add_to_snake(players["player1"]) == "failed") {
         player_2_score.text(parseInt(player_2_score.text()) + 1)
